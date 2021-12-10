@@ -1,23 +1,116 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import io from "socket.io-client";
+import { useState, useEffect } from "react";
+
+const socket = io.connect("http://localhost:4000");
+
+let inicialPrice = {
+  cellphone: 0,
+  tv: 0,
+  notebook: 0,
+  cellphoneWinner: "",
+  tvWinner: "",
+  notebookWinner: "",
+};
 
 function App() {
+  const [cellphone, setCellphone] = useState(inicialPrice.cellphone);
+  const [tv, setTv] = useState(inicialPrice.tv);
+  const [notebook, setNotebook] = useState(inicialPrice.notebook);
+  const [cellphoneButton, setCellphoneButton] = useState("Dar um lance");
+  const [cellphoneDisabled, setCellphoneDisabled] = useState(false);
+  const [tvButton, setTvButton] = useState("Dar um lance");
+  const [tvDisabled, setTvDisabled] = useState(false);
+  const [notebookButton, setNotebookButton] = useState("Dar um lance");
+  const [notebookDisabled, setNotebookDisabled] = useState(false);
+  const [name, setName] = useState();
+  const [cellphoneWinner, setCellphoneWinner] = useState("");
+  const [tvWinner, setTvWinner] = useState("");
+  const [notebookWinner, setNotebookWinner] = useState("");
+
+  function handleChange(e) {
+    setName(e.target.value);
+  }
+
+  function increaseCellphone() {
+    if (cellphone < 100) socket.emit('updateCellphonePrice', { cellphone, name });    
+  }
+
+  useEffect(() => {
+    socket.on('updateCellphonePriceForAll', (newcellphone) => {
+      setCellphone(newcellphone);
+    })
+  }, [cellphone]);
+
+  socket.on('cellphoneWinner', (name) => {
+    setCellphoneWinner(name);
+    setCellphoneButton('Produto arrematado');
+    setCellphoneDisabled(true);
+  });
+
+  function increaseTv() {
+    if (tv < 100) socket.emit('updateTvPrice', { tv, name });
+  };
+
+  useEffect(() => {
+    socket.on('updateTvPriceForAll', (newTv) => {
+      setTv(newTv);
+    })
+  }, [tv]);
+
+  socket.on('tvWinner', (name) => {
+    setTvWinner(name);
+    setTvButton('Produto arrematado');
+    setTvDisabled(true);
+  });
+
+  function increaseNotebook() {
+    if (notebook < 100) socket.emit('updateNotebookPrice', { notebook, name });
+  };
+
+  useEffect(() => {
+    socket.on('updateNotebookPriceForAll', (newNotebook) => {
+      setNotebook(newNotebook);
+    })
+  }, [notebook]);
+
+  socket.on('notebookWinner', (name) => {
+    setNotebookWinner(name);
+    setNotebookButton('Produto arrematado');
+    setNotebookDisabled(true);
+  });
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>Leilão de Centavos</h1>
+      Nome: <input type="text" name="name" onChange={handleChange} />
+      <p></p>
+      <div className="flex-container">
+        <div>
+          <div>Celular</div>
+          <div>R${cellphone}</div>
+          <button onClick={increaseCellphone} disabled={cellphoneDisabled}>
+            {cellphoneButton}
+          </button>
+          <div>{cellphoneWinner}</div>
+        </div>
+        <div>
+          <div>TV</div>
+          <div>R${tv}</div>
+          <button onClick={increaseTv} disabled={tvDisabled}>
+            {tvButton}
+          </button>
+          <div>{tvWinner}</div>
+        </div>
+        <div>
+          <div>Notebook</div>
+          <div>R${notebook}</div>
+          <button onClick={increaseNotebook} disabled={notebookDisabled}>
+            {notebookButton}
+          </button>
+          <div>{notebookWinner}</div>
+        </div>
+      </div>
     </div>
   );
 }
